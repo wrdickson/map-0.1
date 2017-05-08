@@ -1,0 +1,25 @@
+body {
+	background-color: #ccc;
+	
+}
+#map{
+    height: 300px;
+	width: 300px;
+}
+.popupPanel
+{
+    display: none;
+    //border: solid 1px black;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    //background-color: red;
+    z-index: 100;
+    font-size: 1.2em;
+    font-weight: bold;
+    //height: 30px;
+    //margin-top: -15px;
+
+    width: 150px;
+    margin-left: -75px;
+}

@@ -3,13 +3,12 @@ define([
     'backbone',
     'common/dispatch',
     'tpl!apps/userApp/templates/userLoginModal.tpl',
-	'jquery'
+    'jquery'
 ], function (
     Backbone,
     dispatch,
     userLoginModal
 ) {
-    
     'use strict'
     
     //PRIVATE VARIABLES:
@@ -19,19 +18,10 @@ define([
     var UserModel = Backbone.Model.extend({
         initialize: function(){
             this.on("change", function () {
+                console.log("UserModel registers change");
                 dispatch.trigger("userModel:change", this);
             });
             var baseUrl = dispatch.request("getBaseUrl");
-        },
-        setToGuest: function () {
-            this.set({
-                "mUserId": 0,
-                "mUserKey": 0,
-                "mUserPerm": 0,
-                "mUserName": "Guest"
-            });
-            userApp.setMenuToLogin();
-			$(".collapse").collapse('hide');
         }
     });    
 
@@ -44,17 +34,6 @@ define([
             this.userModel = new UserModel();
             console.log("mUser:", mUser);
             this.userModel.set(mUser);
-            //set the menu appropriately
-            if(this.userModel.get("mUserId") > 0 ) {
-                //render
-                this.setMenuToUser();
-            } else {
-                this.setMenuToLogin();
-            }
-            $("#mLogoff").on("click", function () {
-                self.logoff();
-            });
-
         },
         fireLoginModal: function() {
             var self = this;
@@ -88,7 +67,7 @@ define([
                 data: param,
                 dataType: "json",
                 success: function (data) { 
-					dispatch.trigger("app:spinOff");
+                    dispatch.trigger("app:spinOff");
                     //TODO: handle a failed login, not just error as below . . . 
                     if(data.id > 0){
                         //login passes  ... continue .
@@ -108,10 +87,6 @@ define([
                             var message = "Logged in as:<br/>" + data.username;
                             dispatch.trigger("app:popupMessage", message, "null");
                         });
-                        self.setMenuToUser();
-                    
-                       
-                        
                     } else { 
                         //login failed
                         //alert the modal
@@ -120,12 +95,12 @@ define([
                     }
                 },
                 error: function (error) {
-					dispatch.trigger("app:spinOff");
+                    dispatch.trigger("app:spinOff");
                 }
             }, this);                   
         },        
         logoff: function () {
-			dispatch.trigger("app:spinOn");
+            dispatch.trigger("app:spinOn");
             console.log("user at logoff: ", this.userModel.toJSON());
             var self = this;
             $.ajax({
@@ -136,54 +111,27 @@ define([
                     console.log("logoff response: ", d);
                     //remove user dropdown
                     self.setToGuest();
-                    self.setMenuToLogin();
                 },
                 error: function() {
                     self.setToGuest();
-                    self.setMenuToLogin();
                 },
-				complete: function () {
+                complete: function () {
                     dispatch.trigger("app:spinOff");
                     var message = "Logged off.";
                     dispatch.trigger("app:popupMessage", message, null);                    
-				},
+                },
                 dataType: "json"
             });
         },        
         setMenuToLogin: function () {
             var self = this;
-            $("#signUpLi").removeClass("hidden");
-            $("#userDropdown").addClass("hidden");
-            $("#loginLi").removeClass("hidden");
+            $("#lmap-login").removeClass("hidden");
+            $("#lmap-logoff").addClass("hidden");
             //if you don't do this, subsequent modal will fail
-            $("#loginLi").unbind();
-            $("#loginLi").on("click", function () {
+            $("#lmap-login").unbind();
+            $("#lmap-login").on("click", function () {
                 self.fireLoginModal();
             });
-        },
-        setMenuToUser: function () {
-            //hide login
-            $("#signUpLi").addClass("hidden");
-            //inject username
-            $("#menuUsername").html(UserApp.userModel.get("mUserName") + '<span class="caret"></span>');
-            //show the user dropdown
-            $("#userDropdown").removeClass("hidden");
-            //hide login
-            $("#loginLi").addClass("hidden");
-            //clear old events
-            $("#logoffLi").unbind();
-            //attach events
-            $("#logoffLi").on("click", function (e) {
-				//reapply preventDefault(), since we just unbound it . . . 
-				e.preventDefault();
-                userApp.userModel.logoff();
-            });  
-			//show the admin link if user has perms
-			if(this.userModel.get("miffUserPerm") > 7){
-				$("#adminToggleLi").removeClass("hidden");
-			}else{
-				$("#adminToggleLi").addClass("hidden");	
-			}
         },
         setToGuest: function () {
             this.userModel.set({
@@ -198,7 +146,8 @@ define([
     dispatch.setHandler("userApp:getUserModel", function() {
         return UserApp.userModel;
     });
-    
+
+
     return UserApp;
 
 });

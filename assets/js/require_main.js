@@ -7,14 +7,16 @@ requirejs.config({
   paths: {
     backbone: "vendor/backbone",
     jquery: "vendor/jquery",
+    'jquery-ui': "vendor/jquery-ui/jquery-ui",
     json2: "vendor/json2",
     text: "vendor/text",
     tpl: "vendor/underscore-tpl",
     underscore: "vendor/underscore",
     leaflet: "vendor/leaflet-1.0.3/leaflet-src",
     'leaflet.draw': "vendor/leaflet-draw/leaflet.draw-src", 
-	'leaflet-vector-markers': "vendor/leaflet-vector-markers/leaflet-vector-markers",	
-    bootstrap: "vendor/bootstrap/dist/js/bootstrap.min"
+    'leaflet-vector-markers': "vendor/leaflet-vector-markers/leaflet-vector-markers",   
+    bootstrap: "vendor/bootstrap/dist/js/bootstrap.min",
+    jstree: "vendor/vakata-jstree-a6a0d0d/dist/jstree"
   },
   shim: {
     bootstrap: {
@@ -34,9 +36,14 @@ requirejs.config({
         exports : "L"
     },
     'leaflet.draw': ["leaflet"],
-	'leaflet-vector-markers': ["leaflet"]
-  
-		
+    'leaflet-vector-markers': ["leaflet"],
+    'jquery-ui': {
+        deps: ["jquery"]
+    },
+    jstree: {
+        deps: ["jquery"]
+    }
+        
   }
 });
 require(["app"], function(app){

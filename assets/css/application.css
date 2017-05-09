@@ -1,11 +1,16 @@
 body {
-	background-color: #ccc;
-	
+    background-color: #ccc;
+    
 }
+
+#lMapControl {
+    box-shadow: 3px 3px 3px #888888
+}
+
 #map{
-    height: 300px;
-	width: 300px;
+    height: 672px;
 }
+
 .popupPanel
 {
     display: none;
@@ -14,7 +19,7 @@ body {
     left: 50%;
     top: 50%;
     //background-color: red;
-    z-index: 100;
+    z-index: 1000;
     font-size: 1.2em;
     font-weight: bold;
     //height: 30px;

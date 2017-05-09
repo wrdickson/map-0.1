@@ -66,14 +66,14 @@ class Logger {
         $pdo = DataConnecter::getConnection();
         $stmt = $pdo->prepare("INSERT INTO users (user_pass, user_name, user_email, user_registered, user_perm) VALUES(:pwd, :name, :email, NOW(),:perm)");
         $stmt->bindParam(":pwd", $pwd, PDO::PARAM_STR);
-		$stmt->bindParam(":name", $name, PDO::PARAM_STR);
+        $stmt->bindParam(":name", $name, PDO::PARAM_STR);
         $stmt->bindParam(":email", $email, PDO::PARAM_STR);
         $stmt->bindParam(":perm", $perm, PDO::PARAM_INT);
         $data = $stmt->execute();
         $rowCount = $stmt->rowCount();
-		if($rowCount == 1){
-			$success = true;
-		}
+        if($rowCount == 1){
+            $success = true;
+        }
         //$returnArr['newId'] = $pdo->lastInsertId();
         return $success;
     }
@@ -97,27 +97,27 @@ class Logger {
         $key = hash('sha256', $hData);
         return $key;
     }
-	
-	public static function getAllUsers() {
-		//note: we do NOT return password- it is set only
+    
+    public static function getAllUsers() {
+        //note: we do NOT return password- it is set only
         $pdo = DataConnecter::getConnection();
         $stmt = $pdo->prepare("SELECT * FROM users"); 
         $stmt->bindParam(":id",$id, PDO::PARAM_INT);
         $stmt->execute();
-		$pArr = array();
-		while($obj = $stmt->fetch(PDO::FETCH_OBJ)){
-			$iPerson = array();
-			$iPerson['id'] = $obj->id;
-			$iPerson['username'] = $obj->user_name;
-			$iPerson['email'] = $obj->user_email;
-			$iPerson['permission'] = $obj->user_perm;
-			$iPerson['registered'] = $obj->user_registered;
-			$iPerson['last_login'] = $obj->user_last_login;
-			$iPerson['last_activity'] = $obj->user_last_activity;
-			array_push($pArr, $iPerson);
-		}
-		return json_encode($pArr);
-	}
+        $pArr = array();
+        while($obj = $stmt->fetch(PDO::FETCH_OBJ)){
+            $iPerson = array();
+            $iPerson['id'] = $obj->id;
+            $iPerson['username'] = $obj->user_name;
+            $iPerson['email'] = $obj->user_email;
+            $iPerson['permission'] = $obj->user_perm;
+            $iPerson['registered'] = $obj->user_registered;
+            $iPerson['last_login'] = $obj->user_last_login;
+            $iPerson['last_activity'] = $obj->user_last_activity;
+            array_push($pArr, $iPerson);
+        }
+        return json_encode($pArr);
+    }
     
     public static function logoff($id, $key){
         $response = array();
@@ -136,33 +136,33 @@ class Logger {
         }
         return $response;
     }
-	
-	public static function updateUser($id, $username, $email, $perm) {
+    
+    public static function updateUser($id, $username, $email, $perm) {
         $pdo = DataConnecter::getConnection();
         $stmt = $pdo->prepare("UPDATE users SET user_name = :username, user_perm = :perm, user_email = :email WHERE id = :id"); 
-		$stmt->bindParam(":id",$id, PDO::PARAM_INT);
+        $stmt->bindParam(":id",$id, PDO::PARAM_INT);
         $stmt->bindParam(":username",$username, PDO::PARAM_STR);
-		$stmt->bindParam(":email", $email, PDO::PARAM_STR);
-		$stmt->bindParam(":perm", $perm, PDO::PARAM_INT);
+        $stmt->bindParam(":email", $email, PDO::PARAM_STR);
+        $stmt->bindParam(":perm", $perm, PDO::PARAM_INT);
         $stmt->execute();
         //TODO  rowCount() is not reliable . . .
         $success = $stmt->rowCount();
         $stmt = null;
-		if($success == 1){
-			return true;
-		}else{
-			return false;
-		}
-	}
-	
-	public static function updateUserPassword($id, $pwd) {
-		$password = hash('sha256', $pwd);
+        if($success == 1){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    public static function updateUserPassword($id, $pwd) {
+        $password = hash('sha256', $pwd);
         $pdo = DataConnecter::getConnection();
         $stmt = $pdo->prepare("UPDATE users SET user_pass = :password WHERE id = :id"); 
-		$stmt->bindParam(":id",$id, PDO::PARAM_INT);
+        $stmt->bindParam(":id",$id, PDO::PARAM_INT);
         $stmt->bindParam(":password",$password, PDO::PARAM_STR);
-		return $stmt->execute();
-	}
+        return $stmt->execute();
+    }
 
     private static function updateUserKey($key, $id){
         $pdo = DataConnecter::getConnection();

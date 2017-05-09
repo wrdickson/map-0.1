@@ -1,11 +1,7 @@
 define ([
-    'common/dispatch',
-    'apps/pageLoader/p1/p1',
-
+    'common/dispatch'
 ], function (
-    dispatch,
-    p1
-
+    dispatch
 ) {
     var pageLoader = {
         initialize: function () {
@@ -17,20 +13,9 @@ define ([
             //remove any views in main content
             dispatch.trigger("contentMainClear");
             switch (id) {
-                case "p1":
-                    var p1View = new p1();
-                    $("#contentMain").html(p1View.render().el);
-                
+                case "home":
+                    $("#contentMain").html("Home");
                 break;
-                case "p2":
-                
-                break;
-                case "p3":
-                
-                break;
-                
-                
-                
             }
         }
     }

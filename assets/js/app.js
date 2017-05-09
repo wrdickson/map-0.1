@@ -1,56 +1,56 @@
 //app.js
 define([
     'common/dispatch',
-	'router/router',
+    'router/router',
     'apps/userApp/userApp',
-	'apps/mapApp/mapApp',
+    'apps/mapApp/mapApp',
     'vendor/spin',
-	'backbone',
-	'bootstrap',
-	'jquery'
+    'backbone',
+    'bootstrap',
+    'jquery'
 ], function (
     dispatch,
-	Router,
+    Router,
     UserApp,
-	MapApp,
+    MapApp,
     Spinner,
-	Backbone
-	
+    Backbone
+    
 ) {
-	'use strict';
+    'use strict';
   
     var app;
-	var router;
+    var router;
     var spinner;
-	app = {
-		initializeSpinner: function() {
-			var opts = {
-			  lines: 13 // The number of lines to draw
-			, length: 0 // The length of each line
-			, width: 14 // The line thickness
-			, radius: 50 // The radius of the inner circle
-			, scale: 1 // Scales overall size of the spinner
-			, corners: 1 // Corner roundness (0..1)
-			, color: '#000' // #rgb or #rrggbb or array of colors
-			, opacity: 0 // Opacity of the lines
-			, rotate: 0 // The rotation offset
-			, direction: 1 // 1: clockwise, -1: counterclockwise
-			, speed: 1 // Rounds per second
-			, trail: 29 // Afterglow percentage
-			, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
-			, zIndex: 2e9 // The z-index (defaults to 2000000000)
-			, className: 'spinner' // The CSS class to assign to the spinner
-			, top: '50%' // Top position relative to parent
-			, left: '50%' // Left position relative to parent
-			, shadow: false // Whether to render a shadow
-			, hwaccel: false // Whether to use hardware acceleration
-			, position: 'absolute' // Element positioning
-			}
-			var target = document.getElementById('spinner');
-			spinner = new Spinner(opts).spin(target);
+    app = {
+        initializeSpinner: function() {
+            var opts = {
+              lines: 13 // The number of lines to draw
+            , length: 0 // The length of each line
+            , width: 14 // The line thickness
+            , radius: 50 // The radius of the inner circle
+            , scale: 1 // Scales overall size of the spinner
+            , corners: 1 // Corner roundness (0..1)
+            , color: '#000' // #rgb or #rrggbb or array of colors
+            , opacity: 0 // Opacity of the lines
+            , rotate: 0 // The rotation offset
+            , direction: 1 // 1: clockwise, -1: counterclockwise
+            , speed: 1 // Rounds per second
+            , trail: 29 // Afterglow percentage
+            , fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+            , zIndex: 2e9 // The z-index (defaults to 2000000000)
+            , className: 'spinner' // The CSS class to assign to the spinner
+            , top: '50%' // Top position relative to parent
+            , left: '50%' // Left position relative to parent
+            , shadow: false // Whether to render a shadow
+            , hwaccel: false // Whether to use hardware acceleration
+            , position: 'absolute' // Element positioning
+            }
+            var target = document.getElementById('spinner');
+            spinner = new Spinner(opts).spin(target);
             //hide it to start
             $("#spinner").css("display", "none");
-		},
+        },
         popupMessage: function (message, sender) {
             console.log("ppm fires", message, sender);
             $(sender).addClass("disabled");
@@ -68,21 +68,21 @@ define([
                             $(this).removeClass(animationName2);
                             $(sender).removeClass("disabled");
                         });                   
-                    }, 800);
+                    }, 400);
                 });            
         },
-		spinOff: function () {
-			$("#spinner").css("display", "none");
-		},
-		spinOn: function () {
-			$("#spinner").css("display", "block");
-		},        
-		start: function () {
+        spinOff: function () {
+            $("#spinner").css("display", "none");
+        },
+        spinOn: function () {
+            $("#spinner").css("display", "block");
+        },        
+        start: function () {
             var self = this;
-			console.log("app starts");
-			
-			//initialize the spinner
-			this.initializeSpinner();
+            console.log("app starts");
+            
+            //initialize the spinner
+            this.initializeSpinner();
             
             //base url was passed as a global from index.php
             dispatch.setHandler("getBaseUrl", function () {
@@ -98,11 +98,8 @@ define([
             //initialize history AFTER instantion of router(s)
             Backbone.history.start({
                 pushState: true
-            });	
+            }); 
 
-			//initialize mapApp
-			MapApp.initialize();
-			
             //set events for loading spinner
             dispatch.on("app:spinOn", function() {
                 self.spinOn();
@@ -114,9 +111,19 @@ define([
                 self.popupMessage(message,sender);
             });
             
-		}
-	};
+            dispatch.on("app:login", function () {
+                UserApp.fireLoginModal();
+            });
+            dispatch.on("app:logoff", function () {
+                console.log("logoff triggeres at app.js");
+                UserApp.logoff();
+            });
+            
 
-	return app;
+            
+        }
+    };
+
+    return app;
 });
 

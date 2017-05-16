@@ -1,14 +1,14 @@
 //router
 define ([
     'backbone',
-    'common/dispatch',
     'apps/pageLoader/pageLoader',
-    'apps/mapApp/mapApp'
+    'apps/mapApp/mapApp',
+    'apps/layerApp/layerApp',
 ], function (
     Backbone,
-    dispatch,
     pageLoader,
-    mapApp
+    mapApp,
+    layerApp
 ) {
     'use strict'
     
@@ -18,13 +18,14 @@ define ([
             ''                      :   'home',
             'index.php'             :   'home',
             'c/:id'                 :   'loadPage',
+            'layers/:id'            :   'loadLayer',
             'maps/:id'              :   'loadMap',
             //make sure this one is last
             //it will default if no route is found
             '*path'                 :  'error404' 
         },
         error404: function () {
-            $("#contentMain").html("<h4>Page not found</h4>");            
+            $("#contentMain").html("<h4>Page not found</h4>");
         },
         home: function () {
             pageLoader.loadPage("home");
@@ -35,9 +36,11 @@ define ([
             pageLoader.initialize();
             
         },
+        loadLayer: function (id) {
+            layerApp.initialize(id);
+        },
         loadMap: function (id) {
-            mapApp.initialize();
-            mapApp.loadMap(id);
+            mapApp.initialize(id);
         },
         loadPage: function (id) {
             //$("#contentMain").html("page " + id);
@@ -50,8 +53,6 @@ define ([
                 trigger: true
             }); 
         }
-        
-        
        
     });
     

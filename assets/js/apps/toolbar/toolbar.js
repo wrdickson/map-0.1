@@ -1,6 +1,7 @@
 define([
     'leaflet',
-    'text!apps/toolbar/templates/lMapControl.tpl',    
+    'text!apps/toolbar/templates/lMapControl.tpl',
+    'jquery-ui'
     
 ], function (
     L,

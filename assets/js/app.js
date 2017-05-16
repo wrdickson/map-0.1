@@ -108,7 +108,7 @@ define([
                 self.spinOff();
             });
             dispatch.on("app:popupMessage", function (message, sender) {
-                self.popupMessage(message,sender);
+                self.popupMessage(message, sender);
             });
             
             dispatch.on("app:login", function () {
@@ -118,9 +118,6 @@ define([
                 console.log("logoff triggeres at app.js");
                 UserApp.logoff();
             });
-            
-
-            
         }
     };
 

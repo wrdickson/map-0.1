@@ -3,8 +3,12 @@ body {
     
 }
 
+.jstree-contextmenu {
+    z-index: 1200 !important;
+}
+
 #lMapControl {
-    box-shadow: 3px 3px 3px #888888
+    box-shadow: 3px 3px 3px #888888;
 }
 
 #map{
@@ -19,7 +23,7 @@ body {
     left: 50%;
     top: 50%;
     //background-color: red;
-    z-index: 1000;
+    z-index: 1300;
     font-size: 1.2em;
     font-weight: bold;
     //height: 30px;
@@ -28,3 +32,27 @@ body {
     width: 150px;
     margin-left: -75px;
 }
+
+.workspace {
+    position: absolute;
+    top: 160px;
+    left: 12px; 
+    width: 350px;
+    max-height: 430px;
+    background-color: #d2d2d2;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid #111;
+    overflow: auto; 
+    z-index: 1200;
+    box-shadow: 3px 3px 3px #888888;
+    opacity: .9;
+}
+
+#workspaceContent {
+    background-color: #eee;
+    //border-radius: 6px;
+    //border: 1px solid #aaa;
+    padding: 4px;
+}
+

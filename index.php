@@ -15,12 +15,14 @@
     <link rel="stylesheet" href="<?php echo BASE_URL;?>assets/js/vendor/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="<?php echo BASE_URL;?>assets/js/vendor/bootstrap/dist/css/bootstrap-theme.min.css"> 
     <link rel="stylesheet" href="<?php echo BASE_URL;?>assets/css/animate.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/leaflet-1.0.3/leaflet.css">    
+    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/leaflet-0.7.7/leaflet.css">    
     <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/leaflet-draw/leaflet.draw.css"> 
     <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/leaflet-vector-markers/leaflet-vector-markers.css">
     <link rel="stylesheet" href="<?php echo BASE_URL?>assets/css/font-awesome-4.7.0/css/font-awesome.min.css">  
-    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/jquery-ui/jquery-ui.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/jquery-ui-1.12.1.custom/jquery-ui.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/jquery-ui-1.12.1.custom/jquery-ui.theme.css">
     <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/vakata-jstree-a6a0d0d/dist/themes/default/style.min.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL?>assets/js/vendor/vakata-jstree-a6a0d0d/dist/themes/default/style.min.css" />
     <?php
         //get session user data if available
         //this is to handle the situation where a user refreshes or manually enters a url
@@ -54,6 +56,8 @@
     </div>
 
     <div id="modal"></div>
+    
+    <div id="workspace"></div>
     
     <div class='popupPanel'>
         <div id='pPanelText' class="alert alert-success" role="alert">Successfully longer message here</div>

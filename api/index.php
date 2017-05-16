@@ -5,6 +5,10 @@ require "config/config.php";
 require "phpClasses/class.dataconnecter.php";
 require "phpClasses/class.person.php";
 require "phpClasses/class.logger.php";
+require "phpClasses/class.map.php";
+require "phpClasses/class.mapUtil.php";
+require "phpClasses/geoPHP-master/geoPhp.inc";
+require "phpClasses/class.layer.php";
 
 \Slim\Slim::registerAutoloader();
 
@@ -15,16 +19,48 @@ $app = new \Slim\Slim();
 //route the requests . . . 
 $app->get('/users/:id', 'getUser');
 $app->get('/users/', 'getAllUsers');
+$app->get('/users/:id/maps', 'getMyMaps');
+
+$app->get('/layers/:id', 'getLayer');
+$app->put('/layers/:id', 'updateLayer');
+
 $app->get('/login/','login');
-$app->get("/logoff/", "logoff");
+$app->get('/logoff/', 'logoff');
+
+$app->get('/maps/:id', 'getMap');
+$app->put('/maps/update/parent/:id', 'updateMapParent');
+$app->put('/maps/update/name/:id', 'updateMapName');
+$app->post('/maps/add/:user', 'addMap');
+$app->post('/maps/delete/:mapId', 'deleteMap');
+
 
 $app->post('/users/', 'addUser');
 $app->post('/users/:id', 'updateUser');
+$app->post('/users/:id/maps', 'getMyMaps');
 
 $app->get('/test/:id', 'getTest');
 $app->put('/test/:id',  'updateTest');
 $app->post('/test/', 'addTest');
 
+
+function addMap( $user ){
+    $app = \Slim\Slim::getInstance();
+    $params = json_decode($app->request->getBody(), true);
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    $owner = $params['user']['mUserId'];
+    $directory = $params['directory'];
+    $parent = $params['parent'];
+    $name = "temp_new_node";
+    
+    $response['db_response'] = json_decode( MapUtil::insertMap( $owner, $directory, $parent, $name) );
+    
+    
+    
+    print json_encode($response);
+}
 
 function addTest() {
     $app = \Slim\Slim::getInstance();
@@ -33,7 +69,78 @@ function addTest() {
     foreach($params as $key=>$value){
         $response[$key] = $value;
     }   
-    print json_encode($response);    
+    print json_encode($response);
+}
+
+function deleteMap( $mapId ) {
+    $response = array();
+    $app = \Slim\Slim::getInstance();
+    $params = json_decode($app->request->getBody(), true);
+    $response['params'] = $params;
+    //verify the user
+    $iPerson = new Person( $params['user']['mUserId'] );
+    $response['verify_key'] = $iPerson->verify_key( $params['user']['mUserKey']);
+    $iMap = new Map( $params['nodes']['id'] );
+    $response['rootMap'] = $iMap->dumpArray();
+    if( $iMap->getOwner() == $params['user']['mUserId'] ) {
+        $response['userOwnsMap'] = true;
+    } else {
+        $response['userOwnsMap'] = false;
+    }
+    if( $response['verify_key'] == true && $response['userOwnsMap'] == true ){
+        //delete all children of this map
+        $response['childrenDeleted'] = mapUtil::deleteMapChildren( $params['nodes']['id'] );
+    } else {
+        $response['childrenDeleted'] = false;
+    }
+    //then delete the node if it is owned by the user
+    if( $response['verify_key'] == true && $response['userOwnsMap'] == true ){
+        $response['rootDeleted'] = mapUtil::deleteMap( $params['nodes']['id'] );
+    } else {
+        $response['rootDeleted'] = false;
+    }
+    //include a new copy of the map
+    print json_encode($response); 
+}
+
+function getLayer($id){
+    //this has to come across as json so it will map to the Backbone model
+    $response = array();
+    //$response['layers'] = array();
+    $iLayer = new Layer($id);
+    $response['id'] = $id;
+    $response['layerData'] = $iLayer->dumpArray();
+    print json_encode($response);       
+}
+
+function getMap($id){
+    //this has to come across as json so it will map to the Backbone model
+    $response = array();
+    //$response['layers'] = array();
+    $iMap = new Map($id);    
+    $response['mapData'] = $iMap->dumpArray();
+    //get the layers
+    //explode the layers string
+    //$layersArr = explode(",", $iMap->getLayers());
+    //iterate through each layer and add layer data to response . . . 
+    //TODO handle the case where the layer has been deleted or is corrupt
+    //foreach($layersArr as $iLayerIndex) {
+    foreach ( $iMap->getLayers() as $iLayerIndex => $iLayerInfo ) {
+        $iLayer = new Layer($iLayerIndex);
+        //array_push($response['layers'], $iLayer->dumpArray());
+        $response['layersData'][$iLayerIndex] = $iLayer->dumpArray();
+    }
+    print json_encode($response);   
+}
+
+function getMyMaps ($user) {
+    
+    $response = array();
+    $app = \Slim\Slim::getInstance();
+    $response['user'] = $user;
+    $response['maps'] = MapUtil::getUserMaps( $user );
+    
+    print json_encode($response);
 }
 
 function getTest($id) {
@@ -41,6 +148,103 @@ function getTest($id) {
     $response['id'] = $id;
     $response['name'] = "Chuck";
     print(json_encode($response));
+}
+
+function updateLayer ($id) {
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['$id'] = $id;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //instantiate the layer
+    $iLayer = new Layer($id);
+    
+    //verify that this user has permission to edit this layer
+    if($iLayer->owner == $params['user']['mUserId']) {
+        $userOwnsLayer = true;
+    } else {
+        $userOwnsLayer = false;
+    };
+    
+    $response['userOwnsLayer'] = $userOwnsLayer;
+    
+    //verify user
+    //TODO - fix this IMPORTANT!!!
+    $userVerify = true;
+    $response['userVerified'] = $userVerify;
+    
+    if($userVerify == true && $userOwnsLayer == true) {
+        $response['origLayer'] = $iLayer->dumpArray();
+        $iLayer->geoJson = $params['geoJson'];
+        
+        $response['newGeoJson'] = $params['geoJson'];
+        $response['update'] = $iLayer->updateLayerJson(json_encode($iLayer->geoJson));
+        
+        //return the updated layer
+        $updatedLayer = new Layer($id);
+        $response['updatedLayer'] = $updatedLayer->dumpArray();
+        
+        print json_encode($response);        
+    } else {
+        $app->response->setStatus(403);
+        print json_encode($response);
+    }
+}
+
+
+function updateMapName( $id ) {
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['$id'] = $id;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //verify user's key
+    
+    
+    //verify that map belongs to user
+    $iMap = new Map( $id );
+    $response['origMapObj'] = $iMap->dumpArray();
+    //update the property
+    $response['update'] = $iMap->updateMapName( $params['nodeData']['text'] );
+    if( $response['update'] == true ) {
+        $response['updatedMapObj'] = $iMap->dumpArray();        
+    } else {
+        $response['updatedMapObj'] = false;
+    }
+
+    print json_encode( $response );
+}
+
+function updateMapParent( $id ) {
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['$id'] = $id;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //verify user's key
+    
+    
+    //verify that map belongs to user
+    $iMap = new Map( $id );
+    $response['origMapObj'] = $iMap->dumpArray();
+    //update the property
+    $response['update'] = $iMap->updateMapParent( $params['nodeData']['parent'] );
+    if( $response['update'] == true ) {
+        $response['updatedMapObj'] = $iMap->dumpArray();        
+    } else {
+        $response['updatedMapObj'] = false;
+    }
+
+    print json_encode( $response );
 }
 
 function updateTest() {

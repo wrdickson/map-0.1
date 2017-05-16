@@ -7,12 +7,12 @@ requirejs.config({
   paths: {
     backbone: "vendor/backbone",
     jquery: "vendor/jquery",
-    'jquery-ui': "vendor/jquery-ui/jquery-ui",
+    'jquery-ui': "vendor/jquery-ui-1.12.1.custom/jquery-ui",
     json2: "vendor/json2",
     text: "vendor/text",
     tpl: "vendor/underscore-tpl",
     underscore: "vendor/underscore",
-    leaflet: "vendor/leaflet-1.0.3/leaflet-src",
+    leaflet: "vendor/leaflet-0.7.7/leaflet-src",
     'leaflet.draw': "vendor/leaflet-draw/leaflet.draw-src", 
     'leaflet-vector-markers': "vendor/leaflet-vector-markers/leaflet-vector-markers",   
     bootstrap: "vendor/bootstrap/dist/js/bootstrap.min",
@@ -42,7 +42,7 @@ requirejs.config({
     },
     jstree: {
         deps: ["jquery"]
-    }
+    }  
         
   }
 });

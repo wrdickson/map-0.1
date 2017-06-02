@@ -23,13 +23,16 @@ $app->get('/users/:id/maps', 'getMyMaps');
 
 $app->get('/layers/:id', 'getLayer');
 $app->put('/layers/:id', 'updateLayer');
-
+$app->post('/layers/add/:user', 'addLayer');
+$app->put('/layers/update/name/:id', 'updateLayerName');
 $app->get('/login/','login');
 $app->get('/logoff/', 'logoff');
 
 $app->get('/maps/:id', 'getMap');
 $app->put('/maps/update/parent/:id', 'updateMapParent');
 $app->put('/maps/update/name/:id', 'updateMapName');
+$app->put('/maps/update/style/:mapId/:layerId', 'updateMapStyle');
+$app->put('/maps/update/removeLayer/:mapId', 'removeLayerFromMap');
 $app->post('/maps/add/:user', 'addMap');
 $app->post('/maps/delete/:mapId', 'deleteMap');
 
@@ -42,6 +45,20 @@ $app->get('/test/:id', 'getTest');
 $app->put('/test/:id',  'updateTest');
 $app->post('/test/', 'addTest');
 
+function addLayer ($user) {
+    $app = \Slim\Slim::getInstance();
+    $params = json_decode($app->request->getBody(), true);
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    $owner = $params['user']['mUserId'];
+    $parent = $params['parent'];
+    $directory = $params['directory'];
+    $name = "temp_new_layer";
+    $response['db_response'] = json_decode( MapUtil::insertLayer( $owner, $parent, $name, $directory) );
+    print json_encode($response);
+}
 
 function addMap( $user ){
     $app = \Slim\Slim::getInstance();
@@ -54,11 +71,7 @@ function addMap( $user ){
     $directory = $params['directory'];
     $parent = $params['parent'];
     $name = "temp_new_node";
-    
     $response['db_response'] = json_decode( MapUtil::insertMap( $owner, $directory, $parent, $name) );
-    
-    
-    
     print json_encode($response);
 }
 
@@ -116,19 +129,15 @@ function getLayer($id){
 function getMap($id){
     //this has to come across as json so it will map to the Backbone model
     $response = array();
-    //$response['layers'] = array();
+    $response['layersData'] = array();
     $iMap = new Map($id);    
     $response['mapData'] = $iMap->dumpArray();
     //get the layers
-    //explode the layers string
-    //$layersArr = explode(",", $iMap->getLayers());
-    //iterate through each layer and add layer data to response . . . 
-    //TODO handle the case where the layer has been deleted or is corrupt
-    //foreach($layersArr as $iLayerIndex) {
+
     foreach ( $iMap->getLayers() as $iLayerIndex => $iLayerInfo ) {
-        $iLayer = new Layer($iLayerIndex);
+        $iLayer = new Layer($iLayerInfo['id']);
         //array_push($response['layers'], $iLayer->dumpArray());
-        $response['layersData'][$iLayerIndex] = $iLayer->dumpArray();
+        $response['layersData'][$iLayerIndex] = $iLayer->dumpArray(); 
     }
     print json_encode($response);   
 }
@@ -140,6 +149,7 @@ function getMyMaps ($user) {
     $response['user'] = $user;
     $response['maps'] = MapUtil::getUserMaps( $user );
     
+    
     print json_encode($response);
 }
 
@@ -148,6 +158,21 @@ function getTest($id) {
     $response['id'] = $id;
     $response['name'] = "Chuck";
     print(json_encode($response));
+}
+
+function removeLayerFromMap( $mapId ){
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['mapId'] = $mapId;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //TODO verify user . . .
+    $iMap = new Map($mapId);
+    $response['removeSuccess'] = $iMap->removeLayer($params['layerId']);
+    print json_encode($response);
 }
 
 function updateLayer ($id) {
@@ -194,6 +219,32 @@ function updateLayer ($id) {
     }
 }
 
+function updateLayerName( $layerId ){
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['$id'] = $layerId;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //verify user's key
+    
+    
+    //verify that map belongs to user
+    
+    //update
+    $iLayer = new Layer( $layerId );
+    $response['origLayerObj'] = $iLayer->dumpArray();
+    $response['update'] = $iLayer->updateLayerName( $params['nodeData']['text'] );
+    if( $response['update'] == true ) {
+        $response['updatedLayerObj'] = $iLayer->dumpArray();
+    } else {
+        $response['updatedLayerObj'] = false;
+    }
+
+    print json_encode( $response );
+}
 
 function updateMapName( $id ) {
     $app = \Slim\Slim::getInstance();
@@ -234,6 +285,8 @@ function updateMapParent( $id ) {
     
     
     //verify that map belongs to user
+    
+    
     $iMap = new Map( $id );
     $response['origMapObj'] = $iMap->dumpArray();
     //update the property
@@ -243,7 +296,29 @@ function updateMapParent( $id ) {
     } else {
         $response['updatedMapObj'] = false;
     }
+    print json_encode( $response );
+}
 
+function updateMapStyle( $mapId, $layerId ) {
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json object coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['params'] = $params;
+    //verify user's key
+    
+    //verify that map belongs to user
+    
+    $iMap = new map($params['mapId']);
+    $response['origMap'] = $iMap->dumpArray();
+    $response['updateSuccess'] = $iMap->updateMapStyle( $params );
+    //re instantiate and return the new map (and layers, too, why not?)
+    $iMap = new map($params['mapId']);
+    $response['mapData'] = $iMap->dumpArray();
+    foreach ( $iMap->getLayers() as $iLayerIndex => $iLayerInfo ) {
+        $iLayer = new Layer($iLayerInfo['id']);
+        //array_push($response['layers'], $iLayer->dumpArray());
+        $response['layersData'][$iLayerIndex] = $iLayer->dumpArray(); 
+    }
     print json_encode( $response );
 }
 
@@ -257,15 +332,9 @@ function updateTest() {
     foreach($params as $key=>$value){
         $response[$key] = $value;
     }
-    
-   
-    
     print json_encode($response);
-    
     $app->response->setStatus(201);
- 
 }
-
 
 function login(){ 
     $app = \Slim\Slim::getInstance();
@@ -279,7 +348,6 @@ function login(){
         $_SESSION['mUsername'] = $result['username'];
         $_SESSION['mUserPerm'] = $result['permission'];    
     }
-    
     print json_encode($result);
 }
 
@@ -300,13 +368,10 @@ function getAllUsers(){
     print $response;
 }
 
-
-
 function getUser($id){
     $iPerson = new Person($id);
     print $iPerson->dumpJson();
 }
-
 
 function logoff(){
     $app = \Slim\Slim::getInstance();

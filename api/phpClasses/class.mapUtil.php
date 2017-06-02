@@ -86,13 +86,96 @@ public static function getUserMaps( $userId ){
             $iArr['centroidJson'] = null;
         }
         $iArr['owner'] = $obj->owner;
-        $iArr['layers'] = $obj->layers;
+        $iArr['layers'] = json_decode( $obj->layers, true );
+        $iArr['layersData'] = array();
+        if( is_array( $iArr['layers']) == true ) {
+            foreach( $iArr['layers'] as $key=>$value ) {
+                $iLayer = new Layer( $value['id'] );
+                array_push( $iArr['layersData'], $iLayer->dumpArray() );
+                
+                
+            }
+        };
         $iArr['parent'] = $obj->parent;
         $iArr['directory'] = $obj->directory;
         array_push($returnArr, $iArr);
     }
     return $returnArr;
 }
+
+/*
+Adds a new (blank) (temporary)  map to the database this is just to get the insert id,
+    very shortly, an update should be called to give it proper information
+@param int $owner UserId of the creater
+@param int $parent - id of the map in which the layer is being created
+@param string $name  name of the layer (will be temp until an update operation executes
+@return obj - info on the attempt
+*/
+public static function insertLayer( $owner, $parent, $name, $directory ){
+    //TODO . .. fix the "parent problem" . . . 
+    //first create the layer
+    $owner = $owner;
+    $name = $name;
+    $directory = $directory;
+    $response = array();
+    if( $directory == "0" ){
+        $directory = "0";
+    } else {
+        $directory = "1";
+    }
+    //insert an empty feature collection object
+    $geoJson = '{"type":"FeatureCollection","features":[]}';
+    $pdo = DataConnecter::getConnection();
+    $stmt = $pdo->prepare("INSERT INTO layers ( owner, name, geoJson, dateCreated, parent, directory ) VALUES ( :owner, :name, :geoJson, NOW(), '0', :directory )");
+    $stmt->bindParam(":owner",$owner,PDO::PARAM_INT);
+    $stmt->bindParam(":name",$name,PDO::PARAM_STR);
+    $stmt->bindParam(":geoJson",$geoJson,PDO::PARAM_STR);
+    //$stmt->bindParam(":parent",$parent,PDO::PARAM_INT);
+    $stmt->bindParam(":directory",$directory,PDO::PARAM_STR);
+    $k = $stmt->execute();
+    $response['layer_insert_id'] = $pdo->lastInsertId();
+    $response['execute_layer_add'] = $k;
+    $response['owner'] = $owner;
+    $response['name'] = $name;
+    $response['directory'] = $directory;
+    $response['parent'] = $parent;
+    
+    //then add it to the indicated map
+    if( $k == true ) {
+        //create a blank layer array to be added to the map's array
+        $layer = array();
+        $layer['id'] = $response['layer_insert_id'];
+        $layer['display'] = "true";
+        //default styling
+        $style = array();
+        $style['color'] = "#00ff00";
+        $style['fill'] = "true";
+        $style['fillColor'] = "#00ff00";
+        $style['fillOpacity'] = ".2";
+        $style['iconColor'] = "#000000";
+        $style['markerColor'] = "#00ff00";
+        $style['opacity'] = "1.0";
+        $style['stroke'] = "true";
+        $style['weight'] = "4";
+        $layer['style'] = $style;
+        //first we have to get the old style object
+        $parentMapObj = new Map($parent);
+        $origMap = $parentMapObj->dumpArray();
+        $response['origMap'] = $origMap;
+        $newLayers = $origMap['layers'];
+        array_push($newLayers, $layer);
+        $response['newLayers'] = $newLayers;
+        $response['parent_update_success'] = $parentMapObj->updateMapLayers( $newLayers );
+        
+        //then modify and update
+        
+        
+        
+        
+    }
+        return json_encode( $response );
+}
+
 /*
 Adds a new (blank) (temporary)  map to the database this is just to get the insert id,
     very shortly, an update should be called to give it proper information
@@ -111,7 +194,7 @@ public static function insertMap($owner, $directory, $parent, $name){
     $response = array();
     //if it is a map, not a directory, we want an empty json object for layers
     if( $directory == "0" ){
-        $layers = "{}";
+        $layers = "[]";
     } else {
         $layers = NULL;
     }
@@ -130,7 +213,7 @@ public static function insertMap($owner, $directory, $parent, $name){
     $response['name'] = $name;
     $response['directory'] = $directory;
     $response['parent'] = $parent;
-    return json_encode( $response );       
+    return json_encode( $response );
 }
 
 //@param $envelope -- a wkt polygon (generated from geoPHP->envelope();
@@ -184,11 +267,11 @@ public static function calculateCentroidJson2Wkt($json){
     $mJson = geoPHP::load($json, "json");
     //handle an empty geojson object 
     if($mJson != true) {
-        return null;
+        return "hello";
     };
     $mCentroid = $mJson->centroid();
     $wktCentroid = $mCentroid->out('wkt');
-    return $wktCentroid;    
+    return $wktCentroid;
 }
 /*
 @param float $lat1

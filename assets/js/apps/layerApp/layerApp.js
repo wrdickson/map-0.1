@@ -51,9 +51,10 @@ define ([
             var zoom = 10;
             $("#contentMain").html("<div id='map'></div>");
             //need to manually set icon path for requirejs build . . . 
-            L.Icon.Default.imagePath = self.baseUrl + "assets/js/vendor/leaflet-0.7.7/images/";
-            //L.tileLayer('http://localhost/tServer/api/eImg/{z}/{y}/{x}.jpg',{ 
-            self.map = L.map('map').setView([38.57, -109.54], 14);
+            L.Icon.Default.imagePath = self.baseUrl + "assets/js/vendor/leaflet-1.0.3/images/";
+            self.map = L.map('map', {
+                maxZoom: 15
+            }).setView([38.57, -109.54], 14);
             L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', 
                 {attribution: 'attributes here'
             }).addTo(self.map);     
@@ -76,14 +77,14 @@ define ([
                 self.zoom = self.map.getZoom();
                 self.center = self.map.getCenter();
                 self.bounds = self.map.getBounds();
-                //console.log(self.zoom, self.center, self.bounds);
+                console.log(self.zoom, self.center, self.bounds);
             });
             self.loadLayer();
             
         },
         loadLayer: function() {
             var self = this;
-            $.get(self.baseUrl + "api/layers/" + self.layerId, self.user.toJSON(), function (data){                
+            $.get(self.baseUrl + "api/layers/" + self.layerId, self.user.toJSON(), function (data){
                 success: {
                     console.log("data:", data);
                     self.data = data;
@@ -113,21 +114,25 @@ define ([
             var lng = self.data.layerData.centroid.coordinates[0];
             var center = L.latLng(lat,lng); */
             
-            //set bounds
-            var corner1Lat = self.data.layerData.envelope.coordinates[0][0][1];
-            console.log("corner1Lat", corner1Lat);
-            var corner1Lng = self.data.layerData.envelope.coordinates[0][0][0];
-            console.log("corner1Lng", corner1Lng);
-            var corner2Lat = self.data.layerData.envelope.coordinates[0][2][1];
-            console.log("corner2Lat", corner2Lat);
-            var corner2Lng = self.data.layerData.envelope.coordinates[0][2][0];
-            console.log("corner2Lng", corner2Lng);
-            var corner1 = L.latLng(corner1Lat, corner1Lng),
-            corner2 = L.latLng(corner2Lat, corner2Lng),
-            bounds = L.latLngBounds(corner1, corner2);  
             
-            
-            self.map.fitBounds(bounds); 
+            //handle the case of an empty layer, where envelope == null
+            if( self.data.layerData.envelope != null ) {
+                //set bounds
+                var corner1Lat = self.data.layerData.envelope.coordinates[0][0][1];
+                console.log("corner1Lat", corner1Lat);
+                var corner1Lng = self.data.layerData.envelope.coordinates[0][0][0];
+                console.log("corner1Lng", corner1Lng);
+                var corner2Lat = self.data.layerData.envelope.coordinates[0][2][1];
+                console.log("corner2Lat", corner2Lat);
+                var corner2Lng = self.data.layerData.envelope.coordinates[0][2][0];
+                console.log("corner2Lng", corner2Lng);
+                var corner1 = L.latLng(corner1Lat, corner1Lng),
+                corner2 = L.latLng(corner2Lat, corner2Lng),
+                bounds = L.latLngBounds(corner1, corner2);  
+                
+                
+                self.map.fitBounds(bounds);
+            };
             //self.map.setView(center);
             //reset overlays variable
             var j = 0;
@@ -139,6 +144,7 @@ define ([
                     feature.properties.local.arrayPosition = j;
                     feature.properties.local.layerId = self.data.id;
                     //fire the popup potentialusing a template
+                    console.log("feature.properties", feature.properties);
                     var popupHtml = (popupTemplate(feature.properties));
                     layer.bindPopup(popupHtml);
                     j += 1;
@@ -157,6 +163,7 @@ define ([
             }).addTo(self.map);
             //add the editor
             self.drawControl = new L.Control.Draw({
+            //self.map.addControl ( new L.Control.Draw({
                 edit: {
                     featureGroup: self.overlay
                 },
@@ -165,17 +172,22 @@ define ([
                     rectangle: false,
                     circle: false                    
                 }
-            });
+            }); 
             self.map.on('draw:created', function (e) {
                 //add properties
                 //Extremly important to read this: http://stackoverflow.com/questions/29736345/adding-properties-to-a-leaflet-layer-that-will-become-geojson-options
                 var layer = e.layer,
                     feature = layer.feature = layer.feature || {}; // Initialize feature
+                console.log("e", e);
                 feature.type = feature.type || "Feature"; // Initialize feature.type
                 var props = feature.properties = feature.properties || {}; // Initialize feature.properties
                 props.name = "name";
                 props.desc = "desc";
-                props.icon = "fa%dot-circle-o";
+                props.layerType = e.layerType;
+                if(e.layerType == "marker"){
+                    props.icon = "fa%dot-circle-o";
+                }
+                
                 self.overlay.addLayer(layer);                 
                 //save off to db
                 var rGeoJson = self.overlay.toGeoJSON();

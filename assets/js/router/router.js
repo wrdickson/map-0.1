@@ -18,8 +18,8 @@ define ([
             ''                      :   'home',
             'index.php'             :   'home',
             'c/:id'                 :   'loadPage',
-            'layers/:id'            :   'loadLayer',
-            'maps/:id'              :   'loadMap',
+            'layers/edit/:id'            :   'loadLayer',
+            'maps/edit/:id'              :   'loadMap',
             //make sure this one is last
             //it will default if no route is found
             '*path'                 :  'error404' 

@@ -158,6 +158,22 @@ class Layer {
         }
     }
     
+    public function updateLayerName( $newLayerName ){
+        $layerId = $this->id;
+        $pdo = DataConnecter::getConnection();
+        $stmt = $pdo->prepare("UPDATE layers SET name = :layerName, dateModified = NOW() WHERE id = :id");
+        $stmt->bindParam(":layerName", $newLayerName, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $layerId, PDO::PARAM_INT);
+        $result = $stmt->execute();        
+        //only update locally if the db update is successful
+        if($result == true){
+            $this->name = $newLayerName;
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
     private function wktToJson($wkt){
         $geom = geoPHP::load($wkt,'wkt');
         //handle an empty feature collection

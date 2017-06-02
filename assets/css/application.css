@@ -15,6 +15,22 @@ body {
     height: 672px;
 }
 
+.myLayers {
+    position: absolute;
+    top: 160px;
+    left: 12px; 
+    width: 350px;
+    max-height: 430px;
+    background-color: #d2d2d2;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid #111;
+    overflow: auto; 
+    z-index: 1200;
+    box-shadow: 3px 3px 3px #888888;
+    opacity: .9;
+}
+
 .popupPanel
 {
     display: none;
@@ -31,6 +47,27 @@ body {
 
     width: 150px;
     margin-left: -75px;
+}
+
+#styleEdit {
+    position: absolute;
+    top: 0px;
+    right: 0px; 
+    width: 200px;
+    background-color: #d2d2d2;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid #111;
+    overflow: auto; 
+    z-index: 1200;
+    box-shadow: 3px 3px 3px #888888;
+    opacity: 1.0;
+    display: none;
+}
+#styleEditContent {
+    background-color: #eee;
+    padding: 4px;
+    
 }
 
 .workspace {

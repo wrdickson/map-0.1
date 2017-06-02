@@ -5,7 +5,7 @@
       <span class="fa fa-map"></span>
       <span class="caret"></span>
     </button>
-    <ul  class="dropdown-menu">
+    <ul class="dropdown-menu">
       <li><a id="loadTopo" href="">Topographic</a></li>
       <li><a id="loadOsm" href="">Open Street Map</a></li>
       <li><a id="loadSat" href="">Satellite</a></li>
@@ -19,7 +19,7 @@
       <span class="fa fa-bars"></span>
       <span class="caret"></span>
     </button>
-    <ul  id="layersSelect"  class="dropdown-menu" style="width: 275px">
+    <ul id="layersDropdown" class="dropdown-menu" style="width: 275px">
     </ul>
   </div>
 

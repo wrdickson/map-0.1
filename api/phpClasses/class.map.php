@@ -21,27 +21,6 @@ class Map {
     private $parent;
     private $directory;
     
-    public function tmpUpdate() {
-        //used when we have a map, but just need to calculate envelope, centroid and area . . .
-        $calc = $this->calculateEnvelopeCentroidArea();
-        $id = $this->id;
-        $env = $calc['envelope'];
-        $cen = $calc['centroid'];
-        $ar = $calc['area'];
-        $pdo = DataConnecter::getConnection(); 
-        $stmt = $pdo->prepare("UPDATE maps SET envelope = GeomFromText(:env), centroid = GeomFromText(:cent), area = :area, modified = NOW() WHERE id = :id");
-        $stmt->bindParam(":env", $env, PDO::PARAM_STR);
-        $stmt->bindParam(":cent", $cen, PDO::PARAM_STR);
-        $stmt->bindParam(":area", $ar, PDO::PARAM_STR);
-        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
-        $result = $stmt->execute();
-        if ($result == true) {
-            return true;
-        } else {
-            return false;
-        }        
-    }
-    
     public function __construct($id){
           $pdo = DataConnecter::getConnection();
             $stmt = $pdo->prepare("SELECT id , AsText( envelope ) AS envelope, AsText( centroid ) AS centroid, area, zoom, owner, name , description , layers, added , modified, parent, directory FROM maps WHERE id = :id");
@@ -71,28 +50,23 @@ class Map {
                 $this->parent = $obj->parent;
                 $this->directory = $obj->directory;
             }
-            //now calculate centroid/envelope/area
-            $response = $this->calculateEnvelopeCentroidArea();
-            $a = geoPHP::load($response['envelope']);
-            //handle empty geojson or just a point
-            if($a != true) {
-                $this->envelope = 0;
-            } else {
-                $this->envelope = $a->out('json');
-            }
-            $b = geoPHP::load($response['centroid']);
-            if($b != true) {
-                $this->centroid = 0;
-            } else {
-                $this->centroid = $b->out('json');
-            };
-            $this->area = $response['area'];
-            //$this->test = $response;
+            //calculate centroid, envelope and area
+            $calc = $this->calculateEnvelopeCentroidArea();
+            $this->centroid= $this->wktToJson( $calc['centroid'] );
+            $this->envelope = $this->wktToJson( $calc['envelope'] );
+            $this->area =  $calc['area'] ;
             
-            //debug  we are hitting the db too many times here
-            //BUT  we want to update the centroid/envelope/area every time we load the map
-            //  since the geoJson data on the associated arrays may have changed
-            $this->tmpUpdate();
+            //now update db
+            $cen = $calc['centroid'];
+            $env = $calc['envelope'];
+            $ar = $calc['area'];
+            $pdo = DataConnecter::getConnection(); 
+            $stmt = $pdo->prepare("UPDATE maps SET envelope = GeomFromText(:env), centroid = GeomFromText(:cent), area = :area, modified = NOW() WHERE id = :id");
+            $stmt->bindParam(":env", $env, PDO::PARAM_STR);
+            $stmt->bindParam(":cent", $cen, PDO::PARAM_STR);
+            $stmt->bindParam(":area", $ar, PDO::PARAM_STR);
+            $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+            $this->updateEnvCentArea = $stmt->execute();
     }
     
     public function calculateEnvelopeCentroidArea() {
@@ -100,14 +74,12 @@ class Map {
         $features = array();
         $features['type'] = "FeatureCollection";
         $features['features'] = array();
-        $pdo = DataConnecter::getConnection();
         //build an array of the layers
         //$layers = explode(",", $this->layers);
         //foreach ($layers as $layer) {
         if( $this->layers != null ) {
             foreach ( $this->layers as $layer => $layerInfo) {
-            
-                $iLayer = new Layer($layer);
+                $iLayer = new Layer($layerInfo['id']);
                 $iJson = $iLayer->geoJson;
                 $iso = json_decode($iJson, true);
                 foreach($iso['features'] as $ii) {
@@ -126,8 +98,8 @@ class Map {
     public function dumpArray(){
         $mapArr = array();
         $mapArr['id'] = $this->id; 
-        $mapArr['envelope'] = json_decode($this->envelope, true);   
-        $mapArr['centroid'] = json_decode($this->centroid, true);       
+        $mapArr['envelope'] = json_decode($this->envelope, true);
+        $mapArr['centroid'] = json_decode($this->centroid, true);
         $mapArr['area'] = $this->area;
         $mapArr['zoom'] = $this->zoom;
         $mapArr['owner'] = $this->owner;
@@ -138,7 +110,7 @@ class Map {
         $mapArr['modified'] = $this->modified;
         $mapArr['parent'] = $this->parent;
         $mapArr['directory'] = $this->directory;
-        //$mapArr['test'] = $this->test;
+        $mapArr['updateEnvCentArea'] = $this->updateEnvCentArea;
         return $mapArr;
     }
     
@@ -241,11 +213,34 @@ class Map {
         return $this->parent;
     }
     
+    public function removeLayer( $layerId ){
+        $id = $this->id;
+        $updatedLayers = array();
+        foreach($this->layers as $i=>$v){
+            if($v['id'] != $layerId){
+                array_push($updatedLayers, $v);
+            };
+        };
+        //update with the new layers array
+        $layers = json_encode($updatedLayers);
+        $pdo = DataConnecter::getConnection();
+        $stmt = $pdo->prepare("UPDATE maps SET layers = :layers, modified = NOW() WHERE id = :id");
+        $stmt->bindParam(":layers", $layers, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $this->id, PDO::PARAM_INT);
+        $result = $stmt->execute();        
+        //only update locally if the db update is successful
+        if($result == true){
+            $this->layers = $updatedLayers;
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
     public function updateDefaultZoom($newDefaultZoom){
         //TODO validate . . .
         $mapId = $this->id;
         $pdo = DataConnecter::getConnection();
-        
         $stmt = $pdo->prepare("UPDATE maps SET zoom = :mapZoom, modified = NOW() WHERE id = :id");
         $stmt->bindParam(":mapZoom", $newDefaultZoom, PDO::PARAM_INT);
         $stmt->bindParam(":id", $this->id, PDO::PARAM_INT);
@@ -256,7 +251,7 @@ class Map {
             return true;
         }else{
             return false;
-        }                
+        }
     }
     
     public function updateMapdescription($newMapdescription){
@@ -281,6 +276,55 @@ class Map {
     
     }
     
+    public function updateMapLayers($layersArr){
+        $layersJson =  json_encode($layersArr);
+        $mapId = $this->id;
+        $pdo = DataConnecter::getConnection();
+        $stmt = $pdo->prepare("UPDATE maps SET layers = :layers, modified = NOW() WHERE id = :id");
+        $stmt->bindParam(":layers", $layersJson, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $mapId, PDO::PARAM_INT);
+        $result = $stmt->execute();
+        if($result == true){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    public function updateMapStyle($params){
+        //build a new array
+        $newStyle = array();
+        $newStyle['id'] = $params['layerId'];
+        $newStyle['display'] = $params['display'];
+        $newStyle['style'] = array();
+        $newStyle['style']['color'] = $params['color'];
+        $newStyle['style']['fill'] = $params['fill'];
+        $newStyle['style']['fillColor'] = $params['fillColor'];
+        $newStyle['style']['iconColor'] = $params['iconColor'];
+        $newStyle['style']['markerColor'] = $params['markerColor'];
+        $newStyle['style']['stroke'] = $params['stroke'];
+        $newStyle['style']['weight'] = $params['weight'];
+        $newStyle['style']['opacity'] = $params['opacity'];
+        $newStyle['style']['fillOpacity'] = $params['fillOpacity'];
+        //now iterate through the old array, replacing where necessary
+        $newLayersArray = array();
+        foreach( $this->layers as $index=>$item ) {
+            if( $item['id'] == $newStyle['id'] ){
+                array_push($newLayersArray, $newStyle);
+            } else {
+                array_push($newLayersArray, $item);
+            }
+        };
+        $newLayersJson = json_encode( $newLayersArray );
+        //save off
+        $pdo = DataConnecter::getConnection();
+        $stmt = $pdo->prepare("UPDATE maps SET layers = :newLayersJson, modified = NOW() WHERE id = :id");
+        $stmt->bindParam(":newLayersJson", $newLayersJson, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $this->id, PDO::PARAM_INT);
+        $result = $stmt->execute();
+        return $result;
+    }
+    
     public function updateMapName($newMapName){
         //TODO validate . . .
         $newMapName = stripslashes($newMapName);
@@ -289,7 +333,7 @@ class Map {
         $stmt = $pdo->prepare("UPDATE maps SET name = :mapName, modified = NOW() WHERE id = :id");
         $stmt->bindParam(":mapName", $newMapName, PDO::PARAM_STR);
         $stmt->bindParam(":id", $this->id, PDO::PARAM_INT);
-        $result = $stmt->execute();        
+        $result = $stmt->execute();
         //only update locally if the db update is successful
         if($result == true){
             $this->name = $newMapName;

@@ -3,6 +3,7 @@ requirejs.config({
   waitSeconds: 200,
   //this is HUGE, man.  you need the preceeding slash for the router to work
   //fucking HUGE hours and hours and hours of headpounding, dude!!
+  //baseUrl: "http://localhost/map-0.1/assets/js",
   baseUrl: "/assets/js",
   paths: {
     backbone: "vendor/backbone",
@@ -13,10 +14,12 @@ requirejs.config({
     tpl: "vendor/underscore-tpl",
     underscore: "vendor/underscore",
     leaflet: "vendor/leaflet-0.7.7/leaflet-src",
+    //leaflet: "vendor/leaflet-1.0.3/leaflet-src",
     'leaflet.draw': "vendor/leaflet-draw/leaflet.draw-src", 
     'leaflet-vector-markers': "vendor/leaflet-vector-markers/leaflet-vector-markers",   
     bootstrap: "vendor/bootstrap/dist/js/bootstrap.min",
-    jstree: "vendor/vakata-jstree-a6a0d0d/dist/jstree"
+    jstree: "vendor/vakata-jstree-a6a0d0d/dist/jstree",
+    'jquery-minicolors': "vendor/jquery-minicolors/jquery.minicolors"
   },
   shim: {
     bootstrap: {
@@ -42,8 +45,10 @@ requirejs.config({
     },
     jstree: {
         deps: ["jquery"]
-    }  
-        
+    },
+    'jquery-minicolors': {
+        deps: ["jquery"]
+    }
   }
 });
 require(["app"], function(app){

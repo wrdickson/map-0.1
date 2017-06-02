@@ -113,6 +113,30 @@ define ([
                 dataType: "json"
             });
             return deferred.promise();
+        },
+        updateMapStyle: function( mapId, layerId, params ){
+            var deferred = $.Deferred();
+            var baseUrl = dispatch.request("getBaseUrl");
+            
+            dispatch.trigger("app:spinOn");
+            var promise = $.ajax({
+                method: "PUT",
+                url: baseUrl + "api/maps/update/style/" + mapId +"/" + layerId,
+                //don't fucking forget this!!!
+                data: JSON.stringify(params),
+                success: function (data) {
+                    deferred.resolve(data);
+                },
+                error: function (data) {
+                    console.log("updateMapStle throws an error", data);
+                    dispatch.trigger("app:popupMessage", "Error! Data not saved.", null);
+                },
+                complete: function (data) {
+                    dispatch.trigger("app:spinOff");
+                },
+                dataType: "json"
+            });
+            return deferred.promise();
         }
     };
     

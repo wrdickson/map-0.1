@@ -1,11 +1,13 @@
 define([
     'leaflet',
     'text!apps/toolbar/templates/lMapControl.tpl',
+    'common/dispatch',
     'jquery-ui'
     
 ], function (
     L,
-    lMapControl
+    lMapControl,
+    dispatch
 ) {
     'use strict';
     var Toolbar = {
@@ -14,7 +16,6 @@ define([
         
         /**
         * creates a new toolbar on an already instantiated map
-        * @name $.jstree.create(el [, options])
         * @param user | string - a backbone model of the user from userApp
         * @param type | string =  options options for this instance (extends `$.jstree.defaults`)
         * @return {jsTree} the new instance

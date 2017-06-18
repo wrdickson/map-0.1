@@ -82,9 +82,12 @@ class Map {
                 $iLayer = new Layer($layerInfo['id']);
                 $iJson = $iLayer->geoJson;
                 $iso = json_decode($iJson, true);
-                foreach($iso['features'] as $ii) {
-                    array_push($features['features'], $ii);
-                }
+                //handle empty
+                if($iso['features']){
+                    foreach($iso['features'] as $ii) {
+                        array_push($features['features'], $ii);
+                    }
+                };
             };
         } else {
             

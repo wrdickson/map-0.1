@@ -1,4 +1,4 @@
-<div id = "lMapControl" class="btn-group" role="group" aria-label="...">
+<div id = "layerToolbar" class="btn-group" role="group" aria-label="...">
   <button type="button" class="btn btn-default btn-sm"><span style="color: green">MyTrail.org</span></button>
   <div class="btn-group" role="group">
     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Map functions">
@@ -15,26 +15,27 @@
     </ul>
   </div>
  
-  <div class="btn-group" role="group">
+   <div class="btn-group" role="group">
     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Layer functions">
       <span class="fa fa-bars"></span>
       <span class="caret"></span>
     </button>
     <ul id="layersDropdown" class="dropdown-menu" style="width: 275px">
+        <li><a href="" id="myLayersToggle">My Layers</a></li>
     </ul>
   </div>
 
-  <div class="btn-group" role="group">
+<!--  <div class="btn-group" role="group">
     <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Feature functions">
       <span class="fa fa-list"></span>
       <span class="caret"></span>
     </button>
     <ul id = "featuresSelect" class="dropdown-menu">
     </ul>
-  </div>
+  </div> -->
   
   <div class="btn-group" role="group">
-    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Feature functions">
+    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="User functions">
       <span id="displayUsername"><%= templateData.mUserName %></span>
       <span class="fa fa-user"></span>
       <span class="caret"></span>

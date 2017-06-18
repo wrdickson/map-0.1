@@ -79,9 +79,6 @@ define([
             console.log("user:", user);
             var deferred = $.Deferred();
             var baseUrl = dispatch.request("getBaseUrl");
-/*             var params = {
-                user: user.toJSON()                
-            }; */
             var promise = $.ajax({
                 method: "GET",
                 url: baseUrl + "api/users/" + user.get( "mUserId" ) + "/maps",

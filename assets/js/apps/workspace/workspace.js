@@ -441,8 +441,6 @@ define ([
                                 console.log("gotach23");
                                 return true;
                             };
-
-
                         } ,
                         'data' :  jsTreeData
                     },
@@ -458,17 +456,14 @@ define ([
                         },
                         "layer": {
                             "icon" : dispatch.request("getBaseUrl") + "assets/js/apps/workspace/img/layer16.png"
-                            
                         },
                         "root": {
                             "icon" : dispatch.request("getBaseUrl") + "assets/js/apps/workspace/img/directory16.png"
                         }
                     }
                 });
-                
             });
         }
-    
     };
     return Workspace;
 });

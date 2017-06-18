@@ -15,10 +15,11 @@ body {
     height: 672px;
 }
 
-.myLayers {
+#myLayers {
+    display: none;
     position: absolute;
-    top: 160px;
-    left: 12px; 
+    top: 5px;
+    right: 5px;
     width: 350px;
     max-height: 430px;
     background-color: #d2d2d2;
@@ -29,6 +30,10 @@ body {
     z-index: 1200;
     box-shadow: 3px 3px 3px #888888;
     opacity: .9;
+}
+#myLayersContent{
+    background-color: #eee;
+    padding: 4px;
 }
 
 .popupPanel

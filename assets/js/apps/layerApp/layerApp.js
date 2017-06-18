@@ -3,6 +3,8 @@ define ([
     'apps/layerApp/data/data',
     'tpl!apps/layerApp/templates/popupTemplate.tpl',
     'tpl!apps/layerApp/templates/controlPanel.tpl',
+    'apps/layerApp/toolbar',
+    'apps/layerApp/views/myLayersView',
     'backbone',
     'bootstrap',
     'leaflet',
@@ -14,6 +16,8 @@ define ([
     data,
     popupTemplate,
     controlPanelTemplate,
+    toolbar,
+    MyLayersView,
     Backbone,
     Bootstrap,
     L
@@ -26,15 +30,46 @@ define ([
         center: undefined,
         data: undefined,
         drawControl: undefined,
+        isInitialRender: true,
         layerId: undefined,
         overlay: new L.featureGroup(),
         map: undefined,
         user: undefined,
         zoom: undefined,
         //methods:
-        
+        applyTileLayer: function ( layerName ) {
+            var self = this;
+            switch (layerName) {
+                case "topo":
+                    L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', 
+                        {attribution: 'attributes here'
+                    }).addTo(self.map);
+                break;
+                case "osm":
+                    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(self.map);             
+                break;
+                case "sat":
+                    L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    }).addTo(self.map);
+                break;
+                case "openTopo":
+                    L.tileLayer('http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 17,
+                        attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+                    }).addTo(self.map);
+                break;
+            }
+        },
         initialize: function ( id ) {
             console.log("layerApp initializes . . . ");
+            var self = this;
+            this.dispatch = dispatch;
+            this.dispatch.on("userModel:change", function(){
+                location.reload();
+            });
             this.layerId = id;
             this.baseUrl = dispatch.request("getBaseUrl");
             this.user = dispatch.request("userApp:getUserModel");
@@ -69,7 +104,7 @@ define ([
                 $(".btnFeatureDetail").off();
                 $(".btnFeatureDetail").on("click", function (e) {
                     var arrayPosition = $(e.target).attr('arrayposition');
-                    self.fireFeatureDetailModal(arrayPosition);
+                    self.saveFeatureInfo(arrayPosition);
                 }); 
             });
             //keep track of map center, bounds, zoom.  'moveend' will fire on drag or zoom change
@@ -80,7 +115,51 @@ define ([
                 console.log(self.zoom, self.center, self.bounds);
             });
             self.loadLayer();
+            //toolbar
             
+        },
+        initializeToolbar: function(){
+            var self = this;
+            toolbar.initialize( self.user, "layer");
+            var kk = toolbar.generateMapToolbar();
+            self.map.addControl( kk );
+            //add the event handlers . . .
+            //first, clean up events
+            $("#layerToolbar a").off();
+            $("#layerToolbar a").on("click", function (e) {
+                e.preventDefault();
+                //bit of a hack here to make the dropdown toggle
+                //see http://stackoverflow.com/questions/18855132/close-bootstrap-dropdown-after-link-click
+                $(this).closest(".dropdown-menu").prev().dropdown("toggle");
+                console.log("clicked @ problem", e.target);
+                switch(e.target.id){
+                    case "lmap-login":
+                        dispatch.trigger("app:login");
+                    break;
+                    case "lmap-logoff":
+                        dispatch.trigger("app:logoff");
+                    break;
+                    case "myLayersToggle":
+                        self.showMyLayers();
+                    break;
+                    case "myMaps": 
+                        self.showMyMaps();
+                    break;
+                    case "loadTopo":
+                        self.applyTileLayer("topo");
+                    break;
+                    case "loadOsm":
+                        self.applyTileLayer("osm");
+                    break;
+                    case "loadSat":
+                        self.applyTileLayer("sat");
+                    break;
+                    case "loadOpenTopo":
+                        self.applyTileLayer("openTopo");
+                    break;
+                };
+                return false;
+            });
         },
         loadLayer: function() {
             var self = this;
@@ -94,7 +173,9 @@ define ([
         },
         renderFromLayerData: function(){
             var self = this;
-             //remove all layers (that are features) from present map
+            //burn a new toolbar with each render
+            self.initializeToolbar();
+            //remove all layers (that are features) from present map
             if (self.overlay && self.overlay._layers) {
                 $.each(self.overlay._layers, function (ii, vv) {
                     self.map.removeLayer(vv);
@@ -130,9 +211,11 @@ define ([
                 corner2 = L.latLng(corner2Lat, corner2Lng),
                 bounds = L.latLngBounds(corner1, corner2);  
                 
-                
-                self.map.fitBounds(bounds);
+                if(self.isInitialRender == true){
+                    self.map.fitBounds(bounds);
+                };
             };
+            self.isInitialRender = false;
             //self.map.setView(center);
             //reset overlays variable
             var j = 0;
@@ -146,7 +229,10 @@ define ([
                     //fire the popup potentialusing a template
                     console.log("feature.properties", feature.properties);
                     var popupHtml = (popupTemplate(feature.properties));
-                    layer.bindPopup(popupHtml);
+                    var popupOpts = {
+                        "maxHeight": "250"
+                    };
+                    layer.bindPopup(popupHtml, popupOpts);
                     j += 1;
                 },              
                 pointToLayer: function( feature, latlng ) {
@@ -204,7 +290,7 @@ define ([
                     //rerender just to keep other data dependent things updated . . .
                     self.data.layerData = data.updatedLayer;
                     //rerender map
-                    self.renderFromLayerData();                    
+                    self.renderFromLayerData();
                 });
             }); 
             self.map.on('draw:deleted', function (e) {
@@ -214,10 +300,38 @@ define ([
                     //update local map data
                     self.data.layerData = data.updatedLayer;
                     //rerender map
-                    self.renderFromLayerData();                  
+                    self.renderFromLayerData();
                 });                       
             });  
-            self.map.addControl(self.drawControl);      
+            self.map.addControl(self.drawControl);
+        },
+        saveFeatureInfo: function(arrayPosition){
+            var self = this;
+            var newName = $("#mFeatureName").val();
+            var newDesc = $("#mFeatureDesc").val();
+            var newIcon = $("#mFeatureIcon").val();
+            //update data object
+            self.data.layerData.geoJson.features[arrayPosition].properties.desc = newDesc;
+            self.data.layerData.geoJson.features[arrayPosition].properties.name = newName;
+            if(self.data.layerData.geoJson.features[arrayPosition].geometry.type == "Point"){
+                self.data.layerData.geoJson.features[arrayPosition].properties.icon = newIcon;
+            }
+            //save off
+            data.saveLayer(self.data.layerData.geoJson, self.layerId, self.user).done( function (data) {
+                console.log("back from db:", data);
+            //rerender
+            self.renderFromLayerData();
+            });
+
+        },
+        showMyLayers: function () {
+            console.log("firing showMyLayers()");
+            var self = this;
+            var myLayersView = new MyLayersView( self.user );
+            $("#myLayers").html( myLayersView.render().el ).show("slow", function(){
+                
+            });
+            
         }
     }
     return layerApp;

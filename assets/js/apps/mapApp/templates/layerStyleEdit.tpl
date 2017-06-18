@@ -5,6 +5,7 @@
     <button type="buton" id="minStyleEdit" class="pull-right btn btn-default btn-xs"><span class="fa fa-window-minimize"></span></button>
     <span style="font-size: 16px"><b>Style Editor</b></span><br/>
     <span style="font-size: 16px">Layer: <b><%= name %></b></span><br/>
+    <span style="font-size: 14px">Id: <b><%= id %></b></span><br/>
 </div><br/>
 <div id="styleEditContent">
 
@@ -52,6 +53,11 @@
             <option value="6">6</option>
             <option value="7">7</option>
             <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            
         </select><br/>
         
         <label for="layerFill">Fill:</label>

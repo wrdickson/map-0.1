@@ -19,12 +19,14 @@ $app = new \Slim\Slim();
 //route the requests . . . 
 $app->get('/users/:id', 'getUser');
 $app->get('/users/', 'getAllUsers');
+$app->get('/users/:id/layers', 'getMyLayers');
 $app->get('/users/:id/maps', 'getMyMaps');
 
 $app->get('/layers/:id', 'getLayer');
 $app->put('/layers/:id', 'updateLayer');
 $app->post('/layers/add/:user', 'addLayer');
 $app->put('/layers/update/name/:id', 'updateLayerName');
+$app->put('/layers/update/parent/:id', 'updateLayerParent');
 $app->get('/login/','login');
 $app->get('/logoff/', 'logoff');
 
@@ -142,14 +144,19 @@ function getMap($id){
     print json_encode($response);   
 }
 
+function getMyLayers ($userId) {
+    $response = array();
+    $app = \Slim\Slim::getInstance();
+    $response['user'] = $userId;
+    $response['layers'] = MapUtil::getUserLayers( $userId );
+    print json_encode($response);
+}
+
 function getMyMaps ($user) {
-    
     $response = array();
     $app = \Slim\Slim::getInstance();
     $response['user'] = $user;
     $response['maps'] = MapUtil::getUserMaps( $user );
-    
-    
     print json_encode($response);
 }
 
@@ -230,7 +237,6 @@ function updateLayerName( $layerId ){
     }
     //verify user's key
     
-    
     //verify that map belongs to user
     
     //update
@@ -242,7 +248,32 @@ function updateLayerName( $layerId ){
     } else {
         $response['updatedLayerObj'] = false;
     }
+    print json_encode( $response );
+}
 
+function updateLayerParent( $layerId ){
+    $app = \Slim\Slim::getInstance();
+    //this is the key . . .it's json string coming across
+    $params = json_decode($app->request->getBody(), true);
+    $response['$id'] = $layerId;
+    $response['params'] = $params;
+    foreach($params as $key=>$value){
+        $response[$key] = $value;
+    }
+    //verify user's key
+    
+    //verify that map belongs to user
+    
+    //update
+    $iLayer = new Layer( $layerId );
+    $response['origLayerObj'] = $iLayer->dumpArray();
+    $newParent = $params['nodeData']['parent'];
+    $response['update'] = $iLayer->updateLayerParent( $newParent );
+    if( $response['update'] == true ) {
+        $response['updatedLayerObj'] = $iLayer->dumpArray();
+    } else {
+        $response['updatedLayerObj'] = false;
+    }
     print json_encode( $response );
 }
 

@@ -54,6 +54,43 @@ public static function getAllMaps(){
 
 }
 
+public static function getUserLayers( $userId ) {
+    $returnArr = array();
+    $pdo = DataConnecter::getConnection();
+    $stmt = $pdo->prepare("SELECT id, owner, name, description, geoJson, dateCreated, dateModified, AsText(envelope) As envelope, AsText(centroid) As centroid, tags, parent, directory FROM layers WHERE  owner = :uId");
+    $stmt->bindParam(":uId",$userId,PDO::PARAM_INT);
+    $stmt->execute();
+    while($obj = $stmt->fetch(PDO::FETCH_OBJ)){
+        $iArr = array();
+        $iArr['id'] = $obj->id;
+        $iArr['owner'] = $obj->owner;
+        $iArr['name'] = $obj->name;
+        $iArr['description'] = $obj->description;
+        $iArr['geoJson'] = json_decode($obj->geoJson, true);
+        $iArr['dateCreated'] = $obj->dateCreated;
+        $iArr['dateModified'] = $obj->dateModified;
+        $iArr['envelope'] = $obj->envelope;
+        //convert the envelope to json: 
+        $geoEnv = geoPHP::load($obj->envelope, "wkt");
+        if ($obj->envelope != NULL){
+            $iArr['envelopeJson'] = json_decode($geoEnv->out("json"), true);
+        } else {
+            $iArr['envelopeJson'] = null;
+        };
+        $geoCent = geoPHP::load($obj->centroid, "wkt");
+        if( $obj->centroid != null ) {
+            $iArr['centroidJson'] = json_decode($geoCent->out("json"), true);
+        } else {
+            $iArr['centroidJson'] = null;
+        }
+        $iArr['tags'] = $obj->tags;
+        $iArr['parent'] = $obj->parent;
+        $iArr['directory'] = $obj->directory;
+        array_push($returnArr, $iArr);
+    }
+    return $returnArr;
+}
+
 /* 
 return a user's maps 
 */
@@ -76,7 +113,7 @@ public static function getUserMaps( $userId ){
             $iArr['envelopeJson'] = json_decode($geoEnv->out("json"), true);
         } else {
             $iArr['envelopeJson'] = null;
-        }
+        };
         $iArr['centroid'] = $obj->centroid;
         //convert the centroid to json
         $geoCent = geoPHP::load($obj->centroid, "wkt");
@@ -92,8 +129,6 @@ public static function getUserMaps( $userId ){
             foreach( $iArr['layers'] as $key=>$value ) {
                 $iLayer = new Layer( $value['id'] );
                 array_push( $iArr['layersData'], $iLayer->dumpArray() );
-                
-                
             }
         };
         $iArr['parent'] = $obj->parent;
@@ -107,7 +142,7 @@ public static function getUserMaps( $userId ){
 Adds a new (blank) (temporary)  map to the database this is just to get the insert id,
     very shortly, an update should be called to give it proper information
 @param int $owner UserId of the creater
-@param int $parent - id of the map in which the layer is being created
+@param int $parent - id of the map in which the layer is being created, or 0 if it's a layer without a map
 @param string $name  name of the layer (will be temp until an update operation executes
 @return obj - info on the attempt
 */
@@ -140,8 +175,8 @@ public static function insertLayer( $owner, $parent, $name, $directory ){
     $response['directory'] = $directory;
     $response['parent'] = $parent;
     
-    //then add it to the indicated map
-    if( $k == true ) {
+    //then add it to the indicated map, IF parent != 0
+    if( $k == true  && $parent > 0 ) {
         //create a blank layer array to be added to the map's array
         $layer = array();
         $layer['id'] = $response['layer_insert_id'];

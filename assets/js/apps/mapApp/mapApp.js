@@ -49,7 +49,7 @@ define ([
                 case "topo":
                     L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', 
                         {attribution: 'attributes here'
-                    }).addTo(self.map);             
+                    }).addTo(self.map);
                 break;
                 case "osm":
                     L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -59,7 +59,13 @@ define ([
                 case "sat":
                     L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                    }).addTo(self.map);         
+                    }).addTo(self.map);
+                break;
+                case "openTopo":
+                    L.tileLayer('http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 17,
+                        attribution: 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+                    }).addTo(self.map);
                 break;
             }
         },
@@ -160,6 +166,9 @@ define ([
                     case "loadSat":
                         self.applyTileLayer("sat");
                     break;
+                    case "loadOpenTopo":
+                        self.applyTileLayer("openTopo");
+                    break;
                 };
                 return false;
             });
@@ -229,8 +238,8 @@ define ([
                 self.map.fitBounds(bounds);
                 self.isInitialRender = false;
             };
-            //$.each(self.mapData.layersData, function (i, v) {
-            $.each(self.mapModel.get("layersData"), function (i,v){
+            $.each(self.mapData.layersData, function (i, v) {
+            //$.each(self.mapModel.get("layersData"), function (i,v){
                 //add a button to layers select dropdown
                 var templateData = {
                     "i": i,
@@ -239,9 +248,9 @@ define ([
                     "iconColor":self.mapData.mapData.layers[i].style.iconColor
                 };
                 
-                $("#layersDropdown").append("<li><a class='layerSelect' id='layerSelect" + v.id + "' href='#'>" + v.name + "<button id='layerStyleEdit" + v.id + "' data-name='" + v.name + "' data-layer-index='" + i + "' title='edit layer style' type = 'button' class='layerStyleEdit btn btn-default btn-xs pull-right'><span class= 'fa fa-gear'></span></button></a></li>");
+                $("#layersDropdown").append("<li><a class='layerSelect' id='layerSelect" + v.id + "' href='#'>" + v.name + "<small> id:" + v.id + "</small><button id='layerStyleEdit" + v.id + "' data-name='" + v.name + "' data-layer-index='" + i + "' title='edit layer style' type = 'button' class='layerStyleEdit btn btn-default btn-xs pull-right'><span class= 'fa fa-gear'></span></button></a></li>");
                 //handle the case of an empty feature collection
-                if (v.geoJson.features.length == 0) {
+                if (v.geoJson && v.geoJson.features.length == 0) {
                     self.overlays[v.id] = new L.FeatureGroup();
                     self.map.addLayer(self.overlays[v.id]);
                 //render, muthafucka'
@@ -323,7 +332,10 @@ define ([
                             feature.properties.local.layerId = v.id;
                             //fire the popup potentialusing a template
                             var popupHtml = (popupTemplate(feature.properties));
-                            layer.bindPopup(popupHtml);
+                            var popupOpts = {
+                                "maxHeight": "250"
+                            };
+                            layer.bindPopup(popupHtml, popupOpts);
                             //add an item to featuresSelect
                             var p = {
                                 "arrayPosition": feature.properties.local.arrayPosition,

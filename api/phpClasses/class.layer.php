@@ -174,6 +174,22 @@ class Layer {
         }
     }
     
+    public function updateLayerParent( $newParent ){
+        $layerId = $this->id;
+        $pdo = DataConnecter::getConnection();
+        $stmt = $pdo->prepare("UPDATE layers SET parent = :newParent, dateModified = NOW() WHERE id = :id");
+        $stmt->bindParam(":newParent", $newParent, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $layerId, PDO::PARAM_INT);
+        $result = $stmt->execute();        
+        //only update locally if the db update is successful
+        if($result == true){
+            $this->parent = $newParent;
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
     private function wktToJson($wkt){
         $geom = geoPHP::load($wkt,'wkt');
         //handle an empty feature collection

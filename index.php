@@ -68,12 +68,12 @@
     <div class='popupPanel'>
         <div id='pPanelText' class="alert alert-success" role="alert">Successfully longer message here</div>
     </div>
-    <!--
+
     <script data-main="/assets/js/require_main.js" src="/assets/js/vendor/require.js"></script>     
-    -->
 
+    <!--
     <script src="/build/compiled.js"></script>
-
+    -->
     
 </body
 </html>

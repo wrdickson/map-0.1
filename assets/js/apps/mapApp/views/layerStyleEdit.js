@@ -39,7 +39,6 @@ define([
             });
         },
         minStyleEdit: function () {
-            console.log("click");
                 $("#styleEditContent").slideUp("slow", function () {
             });
         },

@@ -4,11 +4,13 @@ define ([
     'apps/pageLoader/pageLoader',
     'apps/mapApp/mapApp',
     'apps/layerApp/layerApp',
+    'apps/baseMap/baseMap'
 ], function (
     Backbone,
     pageLoader,
     mapApp,
-    layerApp
+    layerApp,
+    baseMap
 ) {
     'use strict'
     
@@ -19,6 +21,7 @@ define ([
             'index.php'             :   'home',
             'c/:id'                 :   'loadPage',
             'layers/edit/:id'            :   'loadLayer',
+            'map/'                       :   'loadBaseMap',
             'maps/edit/:id'              :   'loadMap',
             //make sure this one is last
             //it will default if no route is found
@@ -35,6 +38,9 @@ define ([
             //initialize pageLoader
             pageLoader.initialize();
             
+        },
+        loadBaseMap: function () {
+            baseMap.initialize();
         },
         loadLayer: function (id) {
             layerApp.initialize(id);

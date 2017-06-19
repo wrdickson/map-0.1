@@ -74,7 +74,7 @@ define ([
             this.baseUrl = dispatch.request("getBaseUrl");
             this.user = dispatch.request("userApp:getUserModel");
             this.initializeControlPanel();
-            this.initializeMap();           
+            this.initializeMap();
         },
         initializeControlPanel: function () {
             $("#controlPanel").html( controlPanelTemplate() );
@@ -92,11 +92,11 @@ define ([
             }).setView([38.57, -109.54], 14);
             L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}.jpg', 
                 {attribution: 'attributes here'
-            }).addTo(self.map);     
+            }).addTo(self.map);
             //assign local properties
             self.zoom = self.map.getZoom();
             self.center = self.map.getCenter();
-            self.bounds = self.map.getBounds();            
+            self.bounds = self.map.getBounds();
             //assign events to button on popups
             self.map.on("popupopen", function(e) {
                 console.log("popupopen", $(e.target));

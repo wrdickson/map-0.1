@@ -97,7 +97,7 @@ define([
             });            
             return deferred.promise(); 
         },
-        updateLayerParent( user, nodeData ){
+        updateLayerParent: function( user, nodeData ){
             console.log("user:", user);
             console.log("nodeData", nodeData);
             var deferred = $.Deferred();

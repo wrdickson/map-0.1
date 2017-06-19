@@ -31,7 +31,7 @@
         //get session user data if available
         //this is to handle the situation where a user refreshes or manually enters a url
         if(isset($_SESSION['mUserId']) && isset($_SESSION['mUserKey']) && isset($_SESSION['mUserPerm'])){
-        
+            //TODO validate key with userid
         }else{
             $_SESSION['mUserId'] = 0;
             $_SESSION['mUserKey'] = 0;
@@ -74,6 +74,5 @@
     <!--
     <script src="/build/compiled.js"></script>
     -->
-    
 </body
 </html>

@@ -1,6 +1,8 @@
 <?php 
     session_start();
-    define('BASE_URL', "http://map-0.1/");
+    //define('BASE_URL', "http://map-0.1/");
+    define('BASE_URL', "/");
+    
 ?>
 <!DOCTYPE html>
 <html>
